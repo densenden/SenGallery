@@ -15,7 +15,9 @@ const GalleryPage = () => {
     const fetchImages = async () => {
       try {
         setLoading(true);
-        const response = await fetch(`http://localhost:3001/api/galleries/${galleryName}`);
+        // Use relative URL or environment variable instead of hardcoded localhost
+        const apiUrl = process.env.REACT_APP_API_URL || '/api';
+        const response = await fetch(`${apiUrl}/galleries/${galleryName}`);
         
         if (!response.ok) {
           throw new Error('Failed to fetch gallery images');

@@ -22,7 +22,7 @@ A minimalist gallery website inspired by Tadao Ando's architectural style, desig
 
 1. Clone the repository:
    ```
-   git clone <repository-url>
+   git clone https://github.com/densenden/SenGallery
    cd sengallery
    ```
 
