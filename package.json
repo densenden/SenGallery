@@ -1,0 +1,22 @@
+{
+  "name": "sengallery",
+  "version": "1.0.0",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "server": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "keywords": ["gallery", "image viewer", "minimalist"],
+  "author": "",
+  "license": "ISC",
+  "description": "A minimalist gallery website inspired by Tadao Ando's style",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^5.1.0"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2",
+    "nodemon": "^3.1.0"
+  }
+}

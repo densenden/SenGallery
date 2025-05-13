@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="en" class="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sen Gallery - Viewer</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/geist-font@latest/geist-font.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/geist-mono@latest/geist-mono.css">
+  <style>
+    :root {
+      --bg-primary: #f5f5f5;
+      --bg-secondary: #ffffff;
+      --bg-accent: #e0e0e0;
+      --text-primary: #000000;
+      --text-secondary: #666666;
+      --text-muted: #888888;
+      --border-color: #e0e0e0;
+    }
+
+    .dark {
+      --bg-primary: #121212;
+      --bg-secondary: #1e1e1e;
+      --bg-accent: #2a2a2a;
+      --text-primary: #ffffff;
+      --text-secondary: #bbbbbb;
+      --text-muted: #999999;
+      --border-color: #333333;
+    }
+
+    body {
+      font-family: 'Geist', sans-serif;
+      background-color: var(--bg-primary);
+      color: var(--text-primary);
+      margin: 0;
+      padding: 0;
+      line-height: 1.6;
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 40px 20px;
+    }
+    header {
+      margin-bottom: 40px;
+      position: relative;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .title-container {
+      flex: 1;
+    }
+    .title {
+      font-size: 2.2rem;
+      font-weight: 500;
+      margin: 0;
+      letter-spacing: -0.02em;
+    }
+    .subtitle {
+      font-size: 1.1rem;
+      color: var(--text-secondary);
+      margin: 5px 0 0;
+      font-weight: 400;
+    }
+    .back-link {
+      font-family: 'Geist Mono', monospace;
+      font-size: 0.7rem;
+      color: var(--text-primary);
+      text-decoration: none;
+      padding: 6px 12px;
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      transition: background-color 0.3s ease;
+      margin-right: 10px;
+    }
+    .back-link:hover {
+      background-color: var(--bg-accent);
+    }
+    .theme-toggle {
+      background: none;
+      border: none;
+      color: var(--text-primary);
+      font-family: 'Geist Mono', monospace;
+      font-size: 0.7rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 5px 10px;
+      border-radius: 4px;
+      background-color: var(--bg-accent);
+    }
+    .footer {
+      margin-top: 80px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border-color);
+      font-family: 'Geist Mono', monospace;
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      text-align: center;
+    }
+    .loading {
+      text-align: center;
+      padding: 50px;
+      font-size: 1.2rem;
+      color: var(--text-secondary);
+    }
+    .error {
+      text-align: center;
+      padding: 50px;
+      font-size: 1.2rem;
+      color: #e53e3e;
+    }
+    /* Image gallery view styles */
+    .images-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 20px;
+    }
+    .image-item {
+      position: relative;
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      overflow: hidden;
+      background-color: var(--bg-secondary);
+      aspect-ratio: 1;
+      cursor: pointer;
+      transition: transform 0.3s ease;
+    }
+    .image-item:hover {
+      transform: scale(1.03);
+    }
+    .image-container {
+      width: 100%;
+      height: 100%;
+      background-size: cover;
+      background-position: center;
+    }
+    .image-meta {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      padding: 10px;
+      background-color: rgba(0, 0, 0, 0.7);
+      font-family: 'Geist Mono', monospace;
+      font-size: 0.65rem;
+      color: #fff;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+    .image-item:hover .image-meta {
+      opacity: 1;
+    }
+    .breadcrumb {
+      display: flex;
+      align-items: center;
+      margin-bottom: 20px;
+      font-family: 'Geist Mono', monospace;
+      font-size: 0.7rem;
+      color: var(--text-muted);
+    }
+    .breadcrumb a {
+      color: var(--text-primary);
+      text-decoration: none;
+    }
+    .breadcrumb span {
+      margin: 0 5px;
+    }
+    .controls {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      align-items: center;
+    }
+    .view-options {
+      display: flex;
+      gap: 10px;
+    }
+    .view-button {
+      background: none;
+      border: 1px solid var(--border-color);
+      color: var(--text-primary);
+      font-family: 'Geist Mono', monospace;
+      font-size: 0.7rem;
+      cursor: pointer;
+      padding: 5px 10px;
+      border-radius: 4px;
+    }
+    .view-button.active {
+      background-color: var(--bg-accent);
+    }
+    #item-count {
+      font-family: 'Geist Mono', monospace;
+      font-size: 0.65rem;
+      color: var(--text-muted);
+    }
+    /* Modal styles */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(0, 0, 0, 0.95);
+      z-index: 1000;
+      overflow: hidden;
+    }
+    .modal-content {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      max-width: 90%;
+      max-height: 90%;
+      transition: opacity 0.3s ease;
+    }
+    .modal-image {
+      max-width: 100%;
+      max-height: 90vh;
+      object-fit: contain;
+      display: block;
+      box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
+      opacity: 0;
+      transition: opacity 0.5s ease;
+    }
+    .modal-image.loaded {
+      opacity: 1;
+    }
+    .modal-close {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      color: #fff;
+      font-size: 1.5rem;
+      cursor: pointer;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-color: rgba(0, 0, 0, 0.5);
+      border-radius: 50%;
+      transition: background-color 0.3s ease;
+    }
+    .modal-close:hover {
+      background-color: rgba(255, 255, 255, 0.2);
+    }
+    .modal-nav {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #fff;
+      font-size: 2rem;
+      cursor: pointer;
+      width: 50px;
+      height: 50px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-color: rgba(0, 0, 0, 0.5);
+      border-radius: 50%;
+      transition: background-color 0.3s ease;
+    }
+    .modal-nav:hover {
+      background-color: rgba(255, 255, 255, 0.2);
+    }
+    .modal-prev {
+      left: 20px;
+    }
+    .modal-next {
+      right: 20px;
+    }
+    .modal-caption {
+      position: absolute;
+      bottom: 20px;
+      left: 0;
+      right: 0;
+      background-color: rgba(0, 0, 0, 0.7);
+      color: #fff;
+      padding: 15px;
+      text-align: center;
+      font-family: 'Geist Mono', monospace;
+      font-size: 0.7rem;
+    }
+    .slideshow-link {
+      font-family: 'Geist Mono', monospace;
+      font-size: 0.7rem;
+      color: var(--text-primary);
+      text-decoration: none;
+      padding: 6px 12px;
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      transition: background-color 0.3s ease;
+      display: inline-block;
+      margin-top: 20px;
+    }
+    .slideshow-link:hover {
+      background-color: var(--bg-accent);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="title-container">
+        <h1 class="title">Sen Gallery</h1>
+        <h2 class="subtitle" id="gallery-title">Gallery</h2>
+      </div>
+      <div>
+        <a href="index.html" class="back-link">← Zurück</a>
+        <button class="theme-toggle" id="theme-toggle">
+          <span class="icon">☼</span>
+          <span class="text">Light</span>
+        </button>
+      </div>
+    </header>
+
+    <div class="breadcrumb" id="breadcrumb">
+      <a href="index.html">Home</a> <span>/</span> <span id="current-gallery">Gallery</span>
+    </div>
+
+    <div class="controls">
+      <div class="view-options">
+        <button class="view-button active" data-columns="auto">Auto</button>
+        <button class="view-button" data-columns="3">3 Spalten</button>
+        <button class="view-button" data-columns="4">4 Spalten</button>
+      </div>
+      <div id="item-count"></div>
+    </div>
+
+    <div id="gallery-container">
+      <div class="loading">Lade Galerie...</div>
+    </div>
+
+    <div class="footer">
+      © 2024 Sen Gallery — Alle Rechte vorbehalten
+    </div>
+  </div>
+
+  <!-- Modal for image viewing -->
+  <div class="modal" id="image-modal">
+    <div class="modal-content">
+      <img src="" alt="" class="modal-image" id="modal-image">
+      <div class="modal-caption" id="modal-caption"></div>
+    </div>
+    <div class="modal-close" id="modal-close">×</div>
+    <div class="modal-nav modal-prev" id="modal-prev">❮</div>
+    <div class="modal-nav modal-next" id="modal-next">❯</div>
+  </div>
+
+  <script>
+    // Theme toggle functionality
+    const htmlElement = document.documentElement;
+    const themeToggle = document.getElementById('theme-toggle');
+    const themeIcon = themeToggle.querySelector('.icon');
+    const themeText = themeToggle.querySelector('.text');
+
+    // Check if dark mode was previously set
+    if (localStorage.getItem('theme') === 'dark') {
+      htmlElement.classList.remove('light');
+      htmlElement.classList.add('dark');
+      themeIcon.textContent = '☾';
+      themeText.textContent = 'Dark';
+    }
+
+    themeToggle.addEventListener('click', () => {
+      if (htmlElement.classList.contains('dark')) {
+        htmlElement.classList.remove('dark');
+        htmlElement.classList.add('light');
+        themeIcon.textContent = '☼';
+        themeText.textContent = 'Light';
+        localStorage.setItem('theme', 'light');
+      } else {
+        htmlElement.classList.remove('light');
+        htmlElement.classList.add('dark');
+        themeIcon.textContent = '☾';
+        themeText.textContent = 'Dark';
+        localStorage.setItem('theme', 'dark');
+      }
+    });
+
+    // Modal elements
+    const modal = document.getElementById('image-modal');
+    const modalImage = document.getElementById('modal-image');
+    const modalCaption = document.getElementById('modal-caption');
+    const modalClose = document.getElementById('modal-close');
+    const modalPrev = document.getElementById('modal-prev');
+    const modalNext = document.getElementById('modal-next');
+    
+    // Current state
+    let currentGallery = '';
+    let currentImages = [];
+    let currentImageIndex = 0;
+
+    // Main initialization
+    function init() {
+      // Set up event handlers
+      window.addEventListener('hashchange', handleRouteChange);
+      
+      // Handle grid view buttons
+      setupGridControls();
+      
+      // Set up modal handlers
+      setupModalHandlers();
+      
+      // Initial route
+      handleRouteChange();
+    }
+
+    // Route handling
+    function handleRouteChange() {
+      const hash = window.location.hash.substr(1);
+      if (hash.startsWith('gallery/')) {
+        const galleryName = hash.replace('gallery/', '');
+        loadGallery(decodeURIComponent(galleryName));
+      } else {
+        // If no gallery specified, go back to index
+        window.location.href = 'index.html';
+      }
+    }
+
+    // Load a specific gallery
+    async function loadGallery(galleryName) {
+      const galleryContainer = document.getElementById('gallery-container');
+      galleryContainer.innerHTML = '<div class="loading">Lade Bilder...</div>';
+      
+      // Update the page title and breadcrumb
+      currentGallery = galleryName;
+      document.getElementById('gallery-title').textContent = capitalizeFirstLetter(galleryName);
+      document.getElementById('current-gallery').textContent = capitalizeFirstLetter(galleryName);
+      
+      try {
+        const response = await fetch(`/api/galleries/${galleryName}`);
+        if (!response.ok) {
+          throw new Error(`Galerie ${galleryName} konnte nicht geladen werden`);
+        }
+        
+        const data = await response.json();
+        currentImages = data.images;
+        
+        if (!currentImages || currentImages.length === 0) {
+          galleryContainer.innerHTML = '<div class="loading">Keine Bilder in dieser Galerie gefunden.</div>';
+          document.getElementById('item-count').textContent = '0 Bilder';
+          return;
+        }
+        
+        displayImages(currentImages);
+        
+        // Add slideshow link
+        const slideshowLink = document.createElement('a');
+        slideshowLink.className = 'slideshow-link';
+        slideshowLink.textContent = 'Diashow starten →';
+        slideshowLink.href = `slideshow.html#gallery/${galleryName}`;
+        galleryContainer.appendChild(slideshowLink);
+        
+      } catch (error) {
+        console.error('Error loading gallery:', error);
+        galleryContainer.innerHTML = `<div class="error">Fehler: ${error.message}</div>`;
+        document.getElementById('item-count').textContent = '0 Bilder';
+      }
+    }
+
+    // Display images in a gallery
+    function displayImages(images) {
+      const galleryContainer = document.getElementById('gallery-container');
+      galleryContainer.innerHTML = '';
+      
+      const imagesGrid = document.createElement('div');
+      imagesGrid.className = 'images-grid';
+      
+      images.forEach((image, index) => {
+        const imageElement = document.createElement('div');
+        imageElement.className = 'image-item';
+        imageElement.setAttribute('data-index', index);
+        
+        const filename = getFilenameFromPath(image.url);
+        
+        imageElement.innerHTML = `
+          <div class="image-container" style="background-image: url('${image.url}')"></div>
+          <div class="image-meta">${filename}</div>
+        `;
+        
+        imageElement.addEventListener('click', () => {
+          openModal(index);
+        });
+        
+        imagesGrid.appendChild(imageElement);
+      });
+      
+      galleryContainer.appendChild(imagesGrid);
+      document.getElementById('item-count').textContent = `${images.length} Bilder`;
+    }
+
+    // Grid view controls
+    function setupGridControls() {
+      const viewButtons = document.querySelectorAll('.view-button');
+      
+      viewButtons.forEach(button => {
+        button.addEventListener('click', () => {
+          viewButtons.forEach(b => b.classList.remove('active'));
+          button.classList.add('active');
+          
+          const columns = button.dataset.columns;
+          const imagesGrid = document.querySelector('.images-grid');
+          
+          if (imagesGrid) {
+            if (columns === '3') {
+              imagesGrid.style.gridTemplateColumns = 'repeat(3, 1fr)';
+            } else if (columns === '4') {
+              imagesGrid.style.gridTemplateColumns = 'repeat(4, 1fr)';
+            } else {
+              imagesGrid.style.gridTemplateColumns = 'repeat(auto-fill, minmax(250px, 1fr))';
+            }
+          }
+        });
+      });
+    }
+
+    // Modal handling
+    function setupModalHandlers() {
+      // Event listeners for modal
+      modalClose.addEventListener('click', closeModal);
+      modalNext.addEventListener('click', nextImage);
+      modalPrev.addEventListener('click', prevImage);
+      
+      // Close modal when clicking outside the image
+      modal.addEventListener('click', function(e) {
+        if (e.target === modal) closeModal();
+      });
+      
+      // Keyboard navigation
+      document.addEventListener('keydown', function(e) {
+        if (modal.style.display === 'block') {
+          if (e.key === 'Escape') closeModal();
+          else if (e.key === 'ArrowRight') nextImage();
+          else if (e.key === 'ArrowLeft') prevImage();
+        }
+      });
+      
+      // Touch swipe handling for mobile
+      let touchStartX = 0;
+      let touchEndX = 0;
+      
+      modal.addEventListener('touchstart', function(e) {
+        touchStartX = e.changedTouches[0].screenX;
+      });
+      
+      modal.addEventListener('touchend', function(e) {
+        touchEndX = e.changedTouches[0].screenX;
+        handleSwipe();
+      });
+      
+      function handleSwipe() {
+        const threshold = 50;
+        if (touchEndX < touchStartX - threshold) {
+          // Swipe left to right (next)
+          nextImage();
+        } else if (touchEndX > touchStartX + threshold) {
+          // Swipe right to left (previous)
+          prevImage();
+        }
+      }
+    }
+
+    // Open modal with an image
+    function openModal(index) {
+      if (!currentImages || currentImages.length === 0) return;
+      
+      currentImageIndex = index;
+      updateModalImage();
+      modal.style.display = 'block';
+      document.body.style.overflow = 'hidden'; // Prevent scrolling when modal is open
+    }
+
+    // Close modal
+    function closeModal() {
+      modal.style.display = 'none';
+      document.body.style.overflow = '';
+    }
+
+    // Update modal image
+    function updateModalImage() {
+      if (!currentImages || currentImages.length === 0) return;
+      
+      const image = currentImages[currentImageIndex];
+      const filename = getFilenameFromPath(image.url);
+      
+      // Reset opacity before loading new image
+      modalImage.classList.remove('loaded');
+      
+      // Set a small timeout to allow the CSS transition to take effect
+      setTimeout(() => {
+        modalImage.src = image.url;
+        modalImage.alt = filename;
+        
+        // Add the loaded class once the image is loaded
+        modalImage.onload = function() {
+          modalImage.classList.add('loaded');
+        };
+        
+        modalCaption.textContent = `${filename} (${currentImageIndex + 1}/${currentImages.length})`;
+        
+        // Update navigation visibility
+        modalPrev.style.display = currentImageIndex > 0 ? 'flex' : 'none';
+        modalNext.style.display = currentImageIndex < currentImages.length - 1 ? 'flex' : 'none';
+      }, 300);
+    }
+
+    // Next image
+    function nextImage() {
+      if (!currentImages || currentImageIndex >= currentImages.length - 1) return;
+      
+      currentImageIndex++;
+      updateModalImage();
+    }
+
+    // Previous image
+    function prevImage() {
+      if (currentImageIndex <= 0) return;
+      
+      currentImageIndex--;
+      updateModalImage();
+    }
+
+    // Helper functions
+    function getFilenameFromPath(path) {
+      return path.split('/').pop().split('?')[0];
+    }
+
+    function capitalizeFirstLetter(string) {
+      return string.charAt(0).toUpperCase() + string.slice(1);
+    }
+
+    // Start the app
+    document.addEventListener('DOMContentLoaded', init);
+  </script>
+</body>
+</html> 

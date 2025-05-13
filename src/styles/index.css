@@ -1,0 +1,134 @@
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
+
+body {
+  font-family: 'Geist', sans-serif;
+}
+
+.small-text {
+  font-family: 'Geist Mono', monospace;
+  color: #9ca3af;
+  font-size: 0.875rem;
+}
+
+.bg-primary {
+  background-color: #f5f5f5;
+}
+
+.bg-secondary {
+  background-color: #e0e0e0;
+}
+
+.border-secondary {
+  border-color: #e0e0e0;
+}
+
+.text-accent {
+  color: #333333;
+}
+
+.text-light-gray {
+  color: #9ca3af;
+}
+
+.font-mono {
+  font-family: 'Geist Mono', monospace;
+}
+
+.container {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+@media (min-width: 640px) {
+  .container {
+    max-width: 640px;
+  }
+}
+
+@media (min-width: 768px) {
+  .container {
+    max-width: 768px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .container {
+    max-width: 1024px;
+  }
+}
+
+@media (min-width: 1280px) {
+  .container {
+    max-width: 1280px;
+  }
+}
+
+.gallery-grid {
+  display: grid;
+  gap: 1rem;
+}
+
+.image-container {
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.3s ease;
+}
+
+.image-container:hover {
+  transform: scale(1.02);
+}
+
+.modal {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background-color: rgba(0, 0, 0, 0.8);
+}
+
+.modal-content {
+  position: relative;
+  max-width: 100%;
+  max-height: 100%;
+  border-radius: 0.5rem;
+}
+
+.modal-image {
+  max-height: 90vh;
+  max-width: 90vw;
+  object-fit: contain;
+  border-radius: 0.5rem;
+}
+
+.navigation-button {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background-color: rgba(255, 255, 255, 0.2);
+  padding: 0.5rem;
+  border-radius: 9999px;
+  transition: background-color 0.3s ease;
+}
+
+.navigation-button:hover {
+  background-color: rgba(255, 255, 255, 0.4);
+}
+
+.close-button {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background-color: rgba(255, 255, 255, 0.2);
+  padding: 0.5rem;
+  border-radius: 9999px;
+  transition: background-color 0.3s ease;
+}
+
+.close-button:hover {
+  background-color: rgba(255, 255, 255, 0.4);
+} 

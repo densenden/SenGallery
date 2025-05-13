@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sen Gallery - Slideshow</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/geist-font@latest/geist-font.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/geist-mono@latest/geist-mono.css">
+  <style>
+    :root {
+      --bg-primary: #f5f5f5;
+      --bg-secondary: #ffffff;
+      --bg-accent: #e0e0e0;
+      --text-primary: #000000;
+      --text-secondary: #666666;
+      --text-muted: #888888;
+      --border-color: #e0e0e0;
+    }
+
+    .dark {
+      --bg-primary: #000000;
+      --bg-secondary: #121212;
+      --bg-accent: #1a1a1a;
+      --text-primary: #ffffff;
+      --text-secondary: #bbbbbb;
+      --text-muted: #999999;
+      --border-color: #333333;
+    }
+
+    body {
+      font-family: 'Geist', sans-serif;
+      background-color: var(--bg-primary);
+      color: var(--text-primary);
+      margin: 0;
+      padding: 0;
+      line-height: 1.6;
+      transition: background-color 0.3s ease, color 0.3s ease;
+      height: 100vh;
+      overflow: hidden;
+    }
+    
+    .loading {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 1.2rem;
+      color: var(--text-secondary);
+    }
+    
+    .error {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 1.2rem;
+      color: #e53e3e;
+      text-align: center;
+      max-width: 80%;
+    }
+    
+    .slideshow {
+      position: relative;
+      width: 100%;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .slide {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: opacity 0.8s ease;
+      z-index: 1;
+    }
+    
+    .slide.active {
+      opacity: 1;
+      z-index: 2;
+    }
+    
+    .slide-image {
+      max-width: 90%;
+      max-height: 90vh;
+      object-fit: contain;
+      box-shadow: 0 0 30px rgba(0, 0, 0, 0.3);
+    }
+    
+    .controls {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      padding: 20px;
+      display: flex;
+      justify-content: space-between;
+      z-index: 10;
+      background-color: rgba(0, 0, 0, 0.5);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+    
+    .slideshow:hover .controls {
+      opacity: 1;
+    }
+    
+    .control-button {
+      background: none;
+      border: none;
+      color: #fff;
+      font-family: 'Geist Mono', monospace;
+      font-size: 0.7rem;
+      cursor: pointer;
+      padding: 8px 15px;
+      border-radius: 4px;
+      background-color: rgba(0, 0, 0, 0.6);
+      transition: background-color 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    
+    .control-button:hover {
+      background-color: rgba(255, 255, 255, 0.2);
+    }
+    
+    .slide-info {
+      position: absolute;
+      bottom: 100px;
+      left: 20px;
+      z-index: 5;
+      font-family: 'Geist Mono', monospace;
+      font-size: 0.7rem;
+      color: rgba(255, 255, 255, 0.8);
+      background-color: rgba(0, 0, 0, 0.7);
+      padding: 10px;
+      border-radius: 4px;
+      transition: opacity 0.3s ease;
+      opacity: 0;
+    }
+    
+    .slideshow:hover .slide-info {
+      opacity: 1;
+    }
+    
+    .nav-arrows {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 3;
+      display: flex;
+      justify-content: space-between;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+    
+    .slideshow:hover .nav-arrows {
+      opacity: 1;
+    }
+    
+    .nav-arrow {
+      width: 80px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 2rem;
+      cursor: pointer;
+      background-color: rgba(0, 0, 0, 0);
+      transition: background-color 0.3s ease;
+    }
+    
+    .nav-arrow:hover {
+      background-color: rgba(0, 0, 0, 0.3);
+    }
+    
+    .autoplay-indicator {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background-color: #4caf50;
+      z-index: 10;
+      transition: opacity 0.3s ease;
+    }
+    
+    .autoplay-indicator.paused {
+      background-color: #f44336;
+    }
+    
+    .breadcrumb {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      font-family: 'Geist Mono', monospace;
+      font-size: 0.7rem;
+      color: rgba(255, 255, 255, 0.8);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+    
+    .slideshow:hover .breadcrumb {
+      opacity: 1;
+    }
+    
+    .breadcrumb a {
+      color: #fff;
+      text-decoration: none;
+      background-color: rgba(0, 0, 0, 0.6);
+      padding: 5px 10px;
+      border-radius: 4px;
+    }
+    
+    .breadcrumb a:hover {
+      background-color: rgba(255, 255, 255, 0.2);
+    }
+    
+    .breadcrumb span {
+      margin: 0 5px;
+      color: rgba(255, 255, 255, 0.5);
+    }
+  </style>
+</head>
+<body>
+  <div class="loading" id="loading">Lade Bilder...</div>
+  
+  <div class="slideshow" id="slideshow" style="display: none;">
+    <div class="breadcrumb" id="breadcrumb">
+      <a href="index.html">Home</a>
+      <span>/</span>
+      <a id="gallery-link" href="#">Gallery</a>
+      <span>/</span>
+      <span>Slideshow</span>
+    </div>
+    
+    <div class="autoplay-indicator" id="autoplay-indicator"></div>
+    
+    <div class="slide-info" id="slide-info"></div>
+    
+    <div class="nav-arrows">
+      <div class="nav-arrow" id="prev-button">❮</div>
+      <div class="nav-arrow" id="next-button">❯</div>
+    </div>
+    
+    <div class="controls">
+      <button class="control-button" id="back-button">
+        <span>←</span>
+        <span>Zurück zur Galerie</span>
+      </button>
+      <div>
+        <button class="control-button" id="play-pause-button">
+          <span id="play-pause-icon">❚❚</span>
+          <span id="play-pause-text">Pause</span>
+        </button>
+      </div>
+    </div>
+    
+    <!-- Slides will be added here dynamically -->
+  </div>
+
+  <script>
+    // DOM elements
+    const slideshowContainer = document.getElementById('slideshow');
+    const loadingElement = document.getElementById('loading');
+    const slideInfoElement = document.getElementById('slide-info');
+    const autoplayIndicator = document.getElementById('autoplay-indicator');
+    const prevButton = document.getElementById('prev-button');
+    const nextButton = document.getElementById('next-button');
+    const backButton = document.getElementById('back-button');
+    const playPauseButton = document.getElementById('play-pause-button');
+    const playPauseIcon = document.getElementById('play-pause-icon');
+    const playPauseText = document.getElementById('play-pause-text');
+    const breadcrumbElement = document.getElementById('breadcrumb');
+    const galleryLinkElement = document.getElementById('gallery-link');
+    
+    // State variables
+    let currentGallery = '';
+    let currentImages = [];
+    let currentSlideIndex = 0;
+    let slideshowInterval = null;
+    let isPlaying = true;
+    let slideshowSpeed = 4000; // 4 seconds
+    
+    // Main initialization
+    function init() {
+      // Set up event handlers
+      window.addEventListener('hashchange', handleRouteChange);
+      
+      // Set up control handlers
+      setupControlHandlers();
+      
+      // Initial route
+      handleRouteChange();
+    }
+    
+    // Route handling
+    function handleRouteChange() {
+      const hash = window.location.hash.substr(1);
+      if (hash.startsWith('gallery/')) {
+        const galleryName = hash.replace('gallery/', '');
+        loadGallery(decodeURIComponent(galleryName));
+      } else {
+        showError('Keine Galerie ausgewählt');
+      }
+    }
+    
+    // Load a specific gallery
+    async function loadGallery(galleryName) {
+      showLoading();
+      currentGallery = galleryName;
+      
+      // Update breadcrumb
+      galleryLinkElement.textContent = capitalizeFirstLetter(galleryName);
+      galleryLinkElement.href = `gallery.html#gallery/${galleryName}`;
+      
+      try {
+        const response = await fetch(`/api/galleries/${galleryName}`);
+        if (!response.ok) {
+          throw new Error(`Galerie ${galleryName} konnte nicht geladen werden`);
+        }
+        
+        const data = await response.json();
+        currentImages = data.images;
+        
+        if (!currentImages || currentImages.length === 0) {
+          showError('Diese Galerie enthält keine Bilder');
+          return;
+        }
+        
+        createSlides(currentImages);
+        startSlideshow();
+        
+      } catch (error) {
+        console.error('Error loading gallery:', error);
+        showError(`Fehler: ${error.message}`);
+      }
+    }
+    
+    // Create slides from images
+    function createSlides(images) {
+      slideshowContainer.innerHTML = '';
+      
+      // Add the UI elements back
+      slideshowContainer.appendChild(breadcrumbElement);
+      slideshowContainer.appendChild(autoplayIndicator);
+      slideshowContainer.appendChild(slideInfoElement);
+      
+      const navArrows = document.createElement('div');
+      navArrows.className = 'nav-arrows';
+      navArrows.innerHTML = `
+        <div class="nav-arrow" id="prev-button">❮</div>
+        <div class="nav-arrow" id="next-button">❯</div>
+      `;
+      slideshowContainer.appendChild(navArrows);
+      
+      const controls = document.createElement('div');
+      controls.className = 'controls';
+      controls.innerHTML = `
+        <button class="control-button" id="back-button">
+          <span>←</span>
+          <span>Zurück zur Galerie</span>
+        </button>
+        <div>
+          <button class="control-button" id="play-pause-button">
+            <span id="play-pause-icon">❚❚</span>
+            <span id="play-pause-text">Pause</span>
+          </button>
+        </div>
+      `;
+      slideshowContainer.appendChild(controls);
+      
+      // Add slides
+      images.forEach((image, index) => {
+        const slide = document.createElement('div');
+        slide.className = 'slide';
+        slide.id = `slide-${index}`;
+        if (index === 0) slide.classList.add('active');
+        
+        const img = document.createElement('img');
+        img.className = 'slide-image';
+        img.src = image.url;
+        img.alt = getFilenameFromPath(image.url);
+        
+        slide.appendChild(img);
+        slideshowContainer.appendChild(slide);
+      });
+      
+      // Reconnect event listeners
+      document.getElementById('prev-button').addEventListener('click', previousSlide);
+      document.getElementById('next-button').addEventListener('click', nextSlide);
+      document.getElementById('back-button').addEventListener('click', () => {
+        stopSlideshow();
+        window.location.href = `gallery.html#gallery/${currentGallery}`;
+      });
+      document.getElementById('play-pause-button').addEventListener('click', togglePlayPause);
+      
+      hideLoading();
+      updateSlideInfo();
+    }
+    
+    // Start automatic slideshow
+    function startSlideshow() {
+      if (slideshowInterval) clearInterval(slideshowInterval);
+      
+      slideshowInterval = setInterval(() => {
+        if (currentSlideIndex >= currentImages.length - 1) {
+          currentSlideIndex = 0;
+        } else {
+          currentSlideIndex++;
+        }
+        updateActiveSlide();
+      }, slideshowSpeed);
+      
+      isPlaying = true;
+      autoplayIndicator.classList.remove('paused');
+      playPauseIcon.textContent = '❚❚';
+      playPauseText.textContent = 'Pause';
+    }
+    
+    // Stop slideshow
+    function stopSlideshow() {
+      if (slideshowInterval) {
+        clearInterval(slideshowInterval);
+        slideshowInterval = null;
+      }
+      
+      isPlaying = false;
+      autoplayIndicator.classList.add('paused');
+      playPauseIcon.textContent = '▶';
+      playPauseText.textContent = 'Play';
+    }
+    
+    // Toggle play/pause
+    function togglePlayPause() {
+      if (isPlaying) {
+        stopSlideshow();
+      } else {
+        startSlideshow();
+      }
+    }
+    
+    // Update which slide is active
+    function updateActiveSlide() {
+      const slides = document.querySelectorAll('.slide');
+      
+      slides.forEach((slide, index) => {
+        if (index === currentSlideIndex) {
+          slide.classList.add('active');
+        } else {
+          slide.classList.remove('active');
+        }
+      });
+      
+      updateSlideInfo();
+    }
+    
+    // Next slide
+    function nextSlide() {
+      if (currentSlideIndex >= currentImages.length - 1) return;
+      
+      currentSlideIndex++;
+      updateActiveSlide();
+      
+      // Reset the autoplay timer when manually changing slides
+      if (isPlaying) {
+        stopSlideshow();
+        startSlideshow();
+      }
+    }
+    
+    // Previous slide
+    function previousSlide() {
+      if (currentSlideIndex <= 0) return;
+      
+      currentSlideIndex--;
+      updateActiveSlide();
+      
+      // Reset the autoplay timer when manually changing slides
+      if (isPlaying) {
+        stopSlideshow();
+        startSlideshow();
+      }
+    }
+    
+    // Update slide information
+    function updateSlideInfo() {
+      if (!currentImages || currentImages.length === 0) return;
+      
+      const image = currentImages[currentSlideIndex];
+      const filename = getFilenameFromPath(image.url);
+      
+      slideInfoElement.textContent = `${filename} (${currentSlideIndex + 1}/${currentImages.length})`;
+      document.title = `${filename} - Sen Gallery Slideshow`;
+    }
+    
+    // Set up control handlers
+    function setupControlHandlers() {
+      // Keyboard navigation
+      document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+          stopSlideshow();
+          window.location.href = `gallery.html#gallery/${currentGallery}`;
+        } else if (e.key === 'ArrowRight') {
+          nextSlide();
+        } else if (e.key === 'ArrowLeft') {
+          previousSlide();
+        } else if (e.key === ' ') {
+          // Space bar toggles play/pause
+          togglePlayPause();
+          e.preventDefault(); // Prevent scrolling
+        }
+      });
+      
+      // Touch swipe handling for mobile
+      let touchStartX = 0;
+      let touchEndX = 0;
+      
+      document.addEventListener('touchstart', function(e) {
+        touchStartX = e.changedTouches[0].screenX;
+      });
+      
+      document.addEventListener('touchend', function(e) {
+        touchEndX = e.changedTouches[0].screenX;
+        handleSwipe();
+      });
+      
+      function handleSwipe() {
+        const threshold = 50;
+        if (touchEndX < touchStartX - threshold) {
+          // Swipe left to right (next)
+          nextSlide();
+        } else if (touchEndX > touchStartX + threshold) {
+          // Swipe right to left (previous)
+          previousSlide();
+        }
+      }
+    }
+    
+    // Helper functions
+    function showLoading() {
+      loadingElement.style.display = 'block';
+      slideshowContainer.style.display = 'none';
+    }
+    
+    function hideLoading() {
+      loadingElement.style.display = 'none';
+      slideshowContainer.style.display = 'block';
+    }
+    
+    function showError(message) {
+      loadingElement.className = 'error';
+      loadingElement.textContent = message;
+    }
+    
+    function getFilenameFromPath(path) {
+      return path.split('/').pop().split('?')[0];
+    }
+    
+    function capitalizeFirstLetter(string) {
+      return string.charAt(0).toUpperCase() + string.slice(1);
+    }
+    
+    // Start the app
+    document.addEventListener('DOMContentLoaded', init);
+  </script>
+</body>
+</html> 
